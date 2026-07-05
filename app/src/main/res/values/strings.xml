@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Material Ripple Effect</string>
+    //Needed
+    <string name="switch_list">ListView</string>
+    <string name="switch_button">Buttons</string>
+    <string name="switch_recycler">RecyclerView</string>
+    <string name="overlay_with_hover">Overlay with hover</string>
+    <string name="ripples_static_init">Ripples static init</string>
+</resources>
