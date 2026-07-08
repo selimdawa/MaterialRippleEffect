@@ -30,7 +30,6 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven { url = uri("https://jitpack.io") } // Add this line
     }
 }
 ```
@@ -38,11 +37,13 @@ dependencyResolutionManagement {
 ### 2. Add the Dependency
 Add the dependency to your app-level `build.gradle.kts` file:
 
+
 ```kotlin
 dependencies {
-    implementation("com.github.selimdawa:MaterialRippleEffect:x.y.z")
+    implementation("io.github.selimdawa:material-ripple-effect:x.y.z")
 }
 ```
+
 
 ---
 
@@ -56,10 +57,10 @@ You can wrap any view with the ripple layout directly inside your XML layout:
     android:id="@+id/rippleLayout"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    app:mre_rippleColor="#FF0000"
-    app:mre_rippleDuration="350"
-    app:mre_rippleAlpha="0.2"
-    app:mre_rippleRadius="12dp">
+    app:mrl_rippleColor="#FF0000"
+    app:mrl_rippleDuration="350"
+    app:mrl_rippleAlpha="0.2"
+    app:mrl_rippleRoundedCorners="12dp">
 
     <Button
         android:layout_width="match_parent"

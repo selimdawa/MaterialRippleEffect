@@ -33,7 +33,7 @@ android {
 }
 
 dependencies {
-    implementation(project(":library"))
+    implementation(project(":rippleeffect"))
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
