@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="mrl_default_hover">true</bool>
+    <bool name="mrl_default_delay_click">true</bool>
+    <bool name="mrl_default_persistent">false</bool>
+    <bool name="mrl_default_search_adapter">false</bool>
+    <bool name="mrl_default_ripple_overlay">false</bool>
+</resources>

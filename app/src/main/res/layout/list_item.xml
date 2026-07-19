@@ -1,23 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<io.selimdawa.rippleeffect.MaterialRippleEffect xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="70dp"
-    app:mrl_rippleAlpha="0.2"
-    app:mrl_rippleColor="#585858"
-    app:mrl_rippleHover="true"
-    app:mrl_rippleOverlay="true">
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp">
 
-    <TextView
-        android:id="@android:id/text1"
+    <io.selimdawa.rippleeffect.MaterialRippleEffect
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@drawable/selector"
-        android:ellipsize="end"
-        android:gravity="center_vertical"
-        android:paddingLeft="8dp"
-        android:paddingRight="8dp"
-        android:singleLine="true"
-        android:textSize="20sp" />
+        app:mrl_rippleAlpha="0.2"
+        app:mrl_rippleColor="@color/gray"
+        app:mrl_rippleHover="true"
+        app:mrl_rippleInAdapter="true"
+        app:mrl_rippleOverlay="true"
+        app:mrl_rippleRoundedCorners="12dp">
 
-</io.selimdawa.rippleeffect.MaterialRippleEffect>
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@android:id/text1"
+            android:layout_width="match_parent"
+            android:layout_height="70dp"
+            android:ellipsize="end"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="16dp"
+            android:singleLine="true"
+            android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+    </io.selimdawa.rippleeffect.MaterialRippleEffect>
+
+</com.google.android.material.card.MaterialCardView>

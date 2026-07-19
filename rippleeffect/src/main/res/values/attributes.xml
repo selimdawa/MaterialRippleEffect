@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <declare-styleable name="MaterialRippleLayout">
+    <declare-styleable name="MaterialRippleEffect">
         <attr name="mrl_rippleColor" format="color" localization="suggested" />
         <attr name="mrl_rippleDimension" format="dimension" localization="suggested" />
         <attr name="mrl_rippleOverlay" format="boolean" localization="suggested" />

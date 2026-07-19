@@ -23,6 +23,8 @@ class ListActivity : AppCompatActivity(), OnItemClickListener {
         binding = ListBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        setSupportActionBar(binding.toolbar)
+
         binding.list.adapter = ArrayAdapter(
             this, R.layout.list_item, android.R.id.text1, data
         )
@@ -31,12 +33,16 @@ class ListActivity : AppCompatActivity(), OnItemClickListener {
         binding.list.onItemLongClickListener = OnItemLongClickListener { _, _, position, _ ->
             if (position % 2 == 0) {
                 Toast.makeText(
-                    this@ListActivity, "long item: $position and not consumed", Toast.LENGTH_SHORT
+                    this@ListActivity,
+                    getString(R.string.toast_long_item_not_consumed, position),
+                    Toast.LENGTH_SHORT
                 ).show()
                 false
             } else {
                 Toast.makeText(
-                    this@ListActivity, "long item: $position and consumed", Toast.LENGTH_SHORT
+                    this@ListActivity,
+                    getString(R.string.toast_long_item_consumed, position),
+                    Toast.LENGTH_SHORT
                 ).show()
                 true
             }
@@ -44,7 +50,9 @@ class ListActivity : AppCompatActivity(), OnItemClickListener {
     }
 
     override fun onItemClick(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-        Toast.makeText(this, "Rippled item: $position", Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+            this, getString(R.string.toast_rippled_item, position), Toast.LENGTH_SHORT
+        ).show()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {

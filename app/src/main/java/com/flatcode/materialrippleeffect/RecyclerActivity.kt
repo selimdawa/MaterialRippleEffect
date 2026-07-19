@@ -11,10 +11,11 @@ import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.flatcode.materialrippleeffect.databinding.RecyclerBinding
-import io.selimdawa.rippleeffect.MaterialRippleEffect
+import io.selimdawa.rippleeffect.materialRipple
 import java.util.UUID
 
 class RecyclerActivity : AppCompatActivity() {
@@ -25,6 +26,8 @@ class RecyclerActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = RecyclerBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        setSupportActionBar(binding.toolbar)
 
         binding.list.layoutManager = LinearLayoutManager(this)
         binding.list.adapter = MyAdapter()
@@ -58,8 +61,13 @@ class RecyclerActivity : AppCompatActivity() {
             val inflater = LayoutInflater.from(viewGroup.context)
             val view = inflater.inflate(R.layout.recycler_item, viewGroup, false)
 
-            val rippleView = MaterialRippleEffect.on(view).rippleOverlay(true).rippleAlpha(0.2f)
-                .rippleColor(-0xa7a7a8).rippleHover(true).create()
+            val rippleView = view.materialRipple {
+                rippleOverlay(true)
+                rippleAlpha(0.2f)
+                rippleColor(ContextCompat.getColor(viewGroup.context, R.color.ripple_gray_demo))
+                rippleHover(true)
+                rippleInAdapter(true)
+            }
 
             return MyViewHolder(rippleView)
         }
@@ -83,20 +91,27 @@ class RecyclerActivity : AppCompatActivity() {
 
         override fun onClick(v: View) {
             Toast.makeText(
-                v.context, "Rippled item: $bindingAdapterPosition", Toast.LENGTH_SHORT
+                v.context,
+                v.context.getString(R.string.toast_rippled_item, bindingAdapterPosition),
+                Toast.LENGTH_SHORT
             ).show()
         }
 
         override fun onLongClick(v: View): Boolean {
             val position = bindingAdapterPosition
+            val context = v.context
             return if (position % 2 == 0) {
                 Toast.makeText(
-                    v.context, "long item: $position and not consumed", Toast.LENGTH_SHORT
+                    context,
+                    context.getString(R.string.toast_long_item_not_consumed, position),
+                    Toast.LENGTH_SHORT
                 ).show()
                 false
             } else {
                 Toast.makeText(
-                    v.context, "long item: $position and consumed", Toast.LENGTH_SHORT
+                    context,
+                    context.getString(R.string.toast_long_item_consumed, position),
+                    Toast.LENGTH_SHORT
                 ).show()
                 true
             }

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="mrl_default_diameter">35dp</dimen>
+    <dimen name="mrl_default_rounded_corners">0dp</dimen>
+    <item name="mrl_default_alpha" format="float" type="dimen">0.2</item>
+</resources>

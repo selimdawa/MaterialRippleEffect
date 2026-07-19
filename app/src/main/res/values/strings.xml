@@ -1,9 +1,35 @@
 <resources>
     <string name="app_name">Material Ripple Effect</string>
-    //Needed
+
     <string name="switch_list">ListView</string>
     <string name="switch_button">Buttons</string>
     <string name="switch_recycler">RecyclerView</string>
     <string name="overlay_with_hover">Overlay with hover</string>
     <string name="ripples_static_init">Ripples static init</string>
+    <string name="recycler_view_demo">Recycler View Demo</string>
+    <string name="list_view_demo">List View Demo</string>
+    <string name="demo_color_alpha">Color &amp; Alpha</string>
+    <string name="demo_duration">Custom Duration (Short)</string>
+    <string name="demo_diameter">Large Diameter</string>
+    <string name="demo_no_overlay">Overlay Disabled</string>
+    <string name="demo_no_hover">Hover Disabled</string>
+    <string name="demo_delayed_click">Delayed Click (2s duration)</string>
+    <string name="demo_persistent">Persistent Ripple</string>
+    <string name="demo_rounded">Rounded Corners (32dp)</string>
+    <string name="demo_manual">Manual Trigger (Center)</string>
+    <string name="demo_manual_point">Manual Trigger (Top-Left)</string>
+    <string name="demo_dynamic_bg">Change Background On Click</string>
+    <string name="toast_manual_point">Ripple from (0,0)</string>
+    <string name="toast_bg_changed">Background changed!</string>
+    <string name="toast_long_click_on">Long click on: %1$s</string>
+    <string name="toast_persistent_ripple">Persistent ripple</string>
+    <string name="toast_manual_trigger">Manual trigger</string>
+    <string name="toast_short_click">Short click</string>
+    <string name="toast_long_click_not_consumed">Long click not consumed</string>
+    <string name="toast_long_click_consumed">Long click and consumed</string>
+    <string name="toast_long_click_persistent">Persistent long click</string>
+    <string name="toast_long_click_rounded">Rounded long click</string>
+    <string name="toast_rippled_item">Rippled item: %1$d</string>
+    <string name="toast_long_item_not_consumed">long item: %1$d and not consumed</string>
+    <string name="toast_long_item_consumed">long item: %1$d and consumed</string>
 </resources>

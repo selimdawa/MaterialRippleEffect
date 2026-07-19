@@ -1,5 +1,3 @@
-@file:Suppress("RemoveRedundantQualifierName")
-
 package io.selimdawa.rippleeffect
 
 import android.animation.Animator
@@ -15,9 +13,7 @@ import android.graphics.Path
 import android.graphics.Point
 import android.graphics.Rect
 import android.graphics.RectF
-import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
-import android.os.Build
 import android.util.AttributeSet
 import android.util.Property
 import android.util.TypedValue
@@ -32,31 +28,67 @@ import android.view.animation.DecelerateInterpolator
 import android.view.animation.LinearInterpolator
 import android.widget.AdapterView
 import android.widget.FrameLayout
+import androidx.core.content.res.ResourcesCompat
+import androidx.core.content.withStyledAttributes
+import androidx.core.graphics.drawable.toDrawable
+import androidx.core.graphics.withClip
+import io.selimdawa.rippleeffect.MaterialRippleEffect.RippleBuilder
 import kotlin.math.pow
 import kotlin.math.sqrt
+import android.view.ViewGroup.LayoutParams as ViewGroupLayoutParams
 
-@Suppress("unused")
 class MaterialRippleEffect @JvmOverloads constructor(
-    context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
+    context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0,
 ) : FrameLayout(context, attrs, defStyleAttr) {
 
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val bounds = Rect()
+    private val clipPath = Path()
+    private val clipRect = RectF()
 
-    private var rippleColor = 0
-    private var rippleOverlay = false
-    private var rippleHover = false
-    private var rippleDiameter = 0
-    private var rippleDuration = 0
-    private var rippleAlpha = 0
-    private var rippleDelayClick = false
-    private var rippleFadeDuration = 0
-    private var ripplePersistent = false
-    private var rippleBackground: Drawable? = null
-    private var rippleInAdapter = false
-    private var rippleRoundedCorners = 0f
+    var rippleColor = Color.BLACK
+        set(value) {
+            field = value
+            paint.color = value
+            paint.alpha = rippleAlpha
+            invalidate()
+        }
+    var rippleOverlay = false
+        set(value) {
+            field = value
+            invalidate()
+        }
+    var rippleHover = true
+    var rippleDiameter = 0
+    var rippleDuration = 0
+    var rippleAlpha = 0
+        set(value) {
+            field = value
+            paint.alpha = value
+            invalidate()
+        }
+    var rippleDelayClick = true
+    var rippleFadeDuration = 0
+    var ripplePersistent = false
+    var rippleBackground: Drawable? = null
+        set(value) {
+            field = value
+            field?.bounds = bounds
+            invalidate()
+        }
+    var rippleInAdapter = false
+    var rippleRoundedCorners = 0f
+        set(value) {
+            field = value
+            updateClipPath()
+            invalidate()
+        }
 
-    private var radius = 0f
+    var radius = 0f
+        set(value) {
+            field = value
+            invalidate()
+        }
     private var parentAdapter: AdapterView<*>? = null
     private var childView: View? = null
 
@@ -66,7 +98,6 @@ class MaterialRippleEffect @JvmOverloads constructor(
     private val currentCoordinates = Point()
     private val previousCoordinates = Point()
 
-    private var layerType = 0
     private var eventCancelled = false
     private var repressed = false
     private var positionInAdapter = 0
@@ -86,7 +117,7 @@ class MaterialRippleEffect @JvmOverloads constructor(
 
         override fun onDown(e: MotionEvent): Boolean {
             hasPerformedLongPress = false
-            return super.onDown(e)
+            return true
         }
     }
 
@@ -95,59 +126,77 @@ class MaterialRippleEffect @JvmOverloads constructor(
     init {
         setWillNotDraw(false)
 
-        val a = context.obtainStyledAttributes(attrs, R.styleable.MaterialRippleLayout)
-        rippleColor = a.getColor(R.styleable.MaterialRippleLayout_mrl_rippleColor, DEFAULT_COLOR)
-        rippleDiameter = a.getDimensionPixelSize(
-            R.styleable.MaterialRippleLayout_mrl_rippleDimension,
-            dpToPx(resources, DEFAULT_DIAMETER_DP).toInt()
-        )
-        rippleOverlay =
-            a.getBoolean(R.styleable.MaterialRippleLayout_mrl_rippleOverlay, DEFAULT_RIPPLE_OVERLAY)
-        rippleHover = a.getBoolean(R.styleable.MaterialRippleLayout_mrl_rippleHover, DEFAULT_HOVER)
-        rippleDuration =
-            a.getInt(R.styleable.MaterialRippleLayout_mrl_rippleDuration, DEFAULT_DURATION)
-        rippleAlpha = (255 * a.getFloat(
-            R.styleable.MaterialRippleLayout_mrl_rippleAlpha, DEFAULT_ALPHA
-        )).toInt()
-        rippleDelayClick =
-            a.getBoolean(R.styleable.MaterialRippleLayout_mrl_rippleDelayClick, DEFAULT_DELAY_CLICK)
-        rippleFadeDuration = a.getInteger(
-            R.styleable.MaterialRippleLayout_mrl_rippleFadeDuration, DEFAULT_FADE_DURATION
-        )
-        rippleBackground = ColorDrawable(
-            a.getColor(
-                R.styleable.MaterialRippleLayout_mrl_rippleBackground, DEFAULT_BACKGROUND
+        val res = resources
+        val defaultColor = ResourcesCompat.getColor(res, R.color.mrl_default_color, null)
+        val defaultBackground = ResourcesCompat.getColor(res, R.color.mrl_default_background, null)
+        val defaultDiameter = res.getDimensionPixelSize(R.dimen.mrl_default_diameter)
+        val defaultRoundedCorners =
+            res.getDimensionPixelSize(R.dimen.mrl_default_rounded_corners).toFloat()
+        val defaultAlpha = res.getFloatCompat(R.dimen.mrl_default_alpha)
+        val defaultDuration = res.getInteger(R.integer.mrl_default_duration)
+        val defaultFadeDuration = res.getInteger(R.integer.mrl_default_fade_duration)
+        val defaultHover = res.getBoolean(R.bool.mrl_default_hover)
+        val defaultDelayClick = res.getBoolean(R.bool.mrl_default_delay_click)
+        val defaultPersistent = res.getBoolean(R.bool.mrl_default_persistent)
+        val defaultInAdapter = res.getBoolean(R.bool.mrl_default_search_adapter)
+        val defaultOverlay = res.getBoolean(R.bool.mrl_default_ripple_overlay)
+
+        context.withStyledAttributes(attrs, R.styleable.MaterialRippleEffect) {
+            rippleColor = getColor(R.styleable.MaterialRippleEffect_mrl_rippleColor, defaultColor)
+            rippleDiameter = getDimensionPixelSize(
+                R.styleable.MaterialRippleEffect_mrl_rippleDimension, defaultDiameter
             )
-        )
-        ripplePersistent =
-            a.getBoolean(R.styleable.MaterialRippleLayout_mrl_ripplePersistent, DEFAULT_PERSISTENT)
-        rippleInAdapter = a.getBoolean(
-            R.styleable.MaterialRippleLayout_mrl_rippleInAdapter, DEFAULT_SEARCH_ADAPTER
-        )
-        rippleRoundedCorners = a.getDimensionPixelSize(
-            R.styleable.MaterialRippleLayout_mrl_rippleRoundedCorners, DEFAULT_ROUNDED_CORNERS
-        ).toFloat()
-        a.recycle()
+            rippleOverlay = getBoolean(
+                R.styleable.MaterialRippleEffect_mrl_rippleOverlay, defaultOverlay
+            )
+            rippleHover = getBoolean(
+                R.styleable.MaterialRippleEffect_mrl_rippleHover, defaultHover
+            )
+            rippleDuration = getInt(
+                R.styleable.MaterialRippleEffect_mrl_rippleDuration, defaultDuration
+            )
+            rippleAlpha = (255 * getFloat(
+                R.styleable.MaterialRippleEffect_mrl_rippleAlpha, defaultAlpha
+            )).toInt()
+            rippleDelayClick = getBoolean(
+                R.styleable.MaterialRippleEffect_mrl_rippleDelayClick, defaultDelayClick
+            )
+            rippleFadeDuration = getInteger(
+                R.styleable.MaterialRippleEffect_mrl_rippleFadeDuration, defaultFadeDuration
+            )
+            rippleBackground = getColor(
+                R.styleable.MaterialRippleEffect_mrl_rippleBackground, defaultBackground
+            ).toDrawable()
+            ripplePersistent = getBoolean(
+                R.styleable.MaterialRippleEffect_mrl_ripplePersistent, defaultPersistent
+            )
+            rippleInAdapter = getBoolean(
+                R.styleable.MaterialRippleEffect_mrl_rippleInAdapter, defaultInAdapter
+            )
+            rippleRoundedCorners = getDimensionPixelSize(
+                R.styleable.MaterialRippleEffect_mrl_rippleRoundedCorners,
+                defaultRoundedCorners.toInt()
+            ).toFloat()
+        }
 
         paint.color = rippleColor
         paint.alpha = rippleAlpha
-        enableClipPathSupportIfNecessary()
     }
 
-    override fun addView(child: View, index: Int, params: android.view.ViewGroup.LayoutParams?) {
-        check(childCount <= 0) { "MaterialRippleLayout can host only one child" }
+    override fun addView(child: View, index: Int, params: ViewGroupLayoutParams?) {
+        check(childCount <= 0) { "MaterialRippleEffect can host only one child" }
         childView = child
         super.addView(child, index, params)
     }
 
     override fun setOnClickListener(onClickListener: OnClickListener?) {
-        checkNotNull(childView) { "MaterialRippleLayout must have a child view to handle clicks" }
         childView?.setOnClickListener(onClickListener)
+            ?: error("MaterialRippleEffect must have a child view")
     }
 
     override fun setOnLongClickListener(onClickListener: OnLongClickListener?) {
-        checkNotNull(childView) { "MaterialRippleLayout must have a child view to handle clicks" }
         childView?.setOnLongClickListener(onClickListener)
+            ?: error("MaterialRippleEffect must have a child view")
     }
 
     override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
@@ -176,13 +225,14 @@ class MaterialRippleEffect @JvmOverloads constructor(
                     child.isPressed = true
                     postDelayed(
                         { child.isPressed = false },
-                        ViewConfiguration.getPressedStateDuration().toLong()
+                        ViewConfiguration.getPressedStateDuration().toLong(),
                     )
                 }
                 if (isEventInBounds) {
                     startRipple(pendingClickEvent)
+                    performClick()
                 } else if (!rippleHover) {
-                    setRadius(0f)
+                    radius = 0f
                 }
                 if (!rippleDelayClick && isEventInBounds) {
                     pendingClickEvent?.run()
@@ -191,7 +241,7 @@ class MaterialRippleEffect @JvmOverloads constructor(
             }
 
             MotionEvent.ACTION_DOWN -> {
-                setPositionInAdapter()
+                updatePositionInAdapter()
                 eventCancelled = false
                 pendingPressEvent = PressedEvent(event)
                 if (isInScrollingContainer) {
@@ -209,11 +259,8 @@ class MaterialRippleEffect @JvmOverloads constructor(
                     previousCoordinates.set(0, 0)
                 }
                 child.onTouchEvent(event)
-                if (rippleHover) {
-                    if (!repressed) startRipple(null)
-                } else {
-                    child.isPressed = false
-                }
+                if (rippleHover && !repressed) startRipple(null)
+                else child.isPressed = false
                 cancelPressedEvent()
             }
 
@@ -252,7 +299,7 @@ class MaterialRippleEffect @JvmOverloads constructor(
         hoverAnimator =
             ObjectAnimator.ofFloat(this, radiusProperty, rippleDiameter.toFloat(), calcRadius)
                 .apply {
-                    duration = HOVER_DURATION
+                    duration = resources.getInteger(R.integer.mrl_hover_duration).toLong()
                     interpolator = LinearInterpolator()
                     start()
                 }
@@ -260,17 +307,18 @@ class MaterialRippleEffect @JvmOverloads constructor(
 
     private fun startRipple(animationEndRunnable: Runnable?) {
         if (eventCancelled) return
-        val endRadiusVal = endRadius
+        val endRadiusVal = calculateEndRadius()
         cancelAnimations()
 
         rippleAnimator = AnimatorSet().apply {
             addListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: Animator) {
                     if (!ripplePersistent) {
-                        setRadius(0f)
-                        setRippleAlpha(rippleAlpha)
+                        radius = 0f
+                        paint.alpha = rippleAlpha
+                        invalidate()
                     }
-                    if (animationEndRunnable != null && rippleDelayClick) {
+                    if ((animationEndRunnable != null) && rippleDelayClick) {
                         animationEndRunnable.run()
                     }
                     childView?.isPressed = false
@@ -278,19 +326,19 @@ class MaterialRippleEffect @JvmOverloads constructor(
             })
 
             val ripple = ObjectAnimator.ofFloat(
-                this@MaterialRippleEffect, radiusProperty, radius, endRadiusVal
+                this@MaterialRippleEffect, radiusProperty, radius, endRadiusVal,
             ).apply {
                 duration = rippleDuration.toLong()
                 interpolator = DecelerateInterpolator()
             }
 
+            val fadeExtraDelay = resources.getInteger(R.integer.mrl_fade_extra_delay)
             val fade =
-                ObjectAnimator.ofInt(this@MaterialRippleEffect, circleAlphaProperty, rippleAlpha, 0)
+                ObjectAnimator.ofInt(this@MaterialRippleEffect, paintAlphaProperty, rippleAlpha, 0)
                     .apply {
                         duration = rippleFadeDuration.toLong()
                         interpolator = AccelerateInterpolator()
-                        startDelay =
-                            (rippleDuration - rippleFadeDuration - FADE_EXTRA_DELAY).toLong()
+                        startDelay = (rippleDuration - rippleFadeDuration - fadeExtraDelay).toLong()
                     }
 
             if (ripplePersistent) {
@@ -313,16 +361,15 @@ class MaterialRippleEffect @JvmOverloads constructor(
         hoverAnimator?.cancel()
     }
 
-    private val endRadius: Float
-        get() {
-            val halfWidth = width / 2
-            val halfHeight = height / 2
-            val radiusX =
-                (if (halfWidth > currentCoordinates.x) width - currentCoordinates.x else currentCoordinates.x).toFloat()
-            val radiusY =
-                (if (halfHeight > currentCoordinates.y) height - currentCoordinates.y else currentCoordinates.y).toFloat()
-            return sqrt(radiusX.toDouble().pow(2.0) + radiusY.toDouble().pow(2.0)).toFloat() * 1.2f
-        }
+    private fun calculateEndRadius(): Float {
+        val halfWidth = width / 2
+        val halfHeight = height / 2
+        val radiusX =
+            if (halfWidth > currentCoordinates.x) width - currentCoordinates.x else currentCoordinates.x
+        val radiusY =
+            if (halfHeight > currentCoordinates.y) height - currentCoordinates.y else currentCoordinates.y
+        return sqrt(radiusX.toDouble().pow(2.0) + radiusY.toDouble().pow(2.0)).toFloat() * 1.2f
+    }
 
     private val isInScrollingContainer: Boolean
         get() {
@@ -334,8 +381,8 @@ class MaterialRippleEffect @JvmOverloads constructor(
             return false
         }
 
-    private fun findParentAdapterView(): AdapterView<*> {
-        parentAdapter?.let { return it }
+    private fun findParentAdapterView(): AdapterView<*>? {
+        if (parentAdapter != null) return parentAdapter
         var current = parent
         while (current != null) {
             if (current is AdapterView<*>) {
@@ -344,29 +391,29 @@ class MaterialRippleEffect @JvmOverloads constructor(
             }
             current = current.parent
         }
-        throw RuntimeException("Could not find a parent AdapterView")
+        return null
     }
 
-    private fun setPositionInAdapter() {
+    private fun updatePositionInAdapter() {
         if (rippleInAdapter) {
-            positionInAdapter = findParentAdapterView().getPositionForView(this)
+            positionInAdapter =
+                findParentAdapterView()?.getPositionForView(this) ?: AdapterView.INVALID_POSITION
         }
     }
 
     private fun adapterPositionChanged(): Boolean {
-        if (rippleInAdapter) {
-            val newPosition = findParentAdapterView().getPositionForView(this)
-            val changed = newPosition != positionInAdapter
-            positionInAdapter = newPosition
-            if (changed) {
-                cancelPressedEvent()
-                cancelAnimations()
-                childView?.isPressed = false
-                setRadius(0f)
-            }
-            return changed
+        if (!rippleInAdapter) return false
+        val adapter = findParentAdapterView() ?: return false
+        val newPosition = adapter.getPositionForView(this)
+        val changed = newPosition != positionInAdapter
+        positionInAdapter = newPosition
+        if (changed) {
+            cancelPressedEvent()
+            cancelAnimations()
+            childView?.isPressed = false
+            radius = 0f
         }
-        return false
+        return changed
     }
 
     private fun findClickableViewInChild(view: View, x: Int, y: Int): Boolean {
@@ -376,7 +423,7 @@ class MaterialRippleEffect @JvmOverloads constructor(
                 val rect = Rect()
                 child.getHitRect(rect)
                 if (rect.contains(x, y) && findClickableViewInChild(
-                        child, x - rect.left, y - rect.top
+                        child, x - rect.left, y - rect.top,
                     )
                 ) {
                     return true
@@ -392,98 +439,63 @@ class MaterialRippleEffect @JvmOverloads constructor(
         super.onSizeChanged(w, h, oldw, oldh)
         bounds.set(0, 0, w, h)
         rippleBackground?.bounds = bounds
+        updateClipPath()
+    }
+
+    private fun updateClipPath() {
+        clipPath.reset()
+        if (rippleRoundedCorners > 0) {
+            clipRect.set(0f, 0f, width.toFloat(), height.toFloat())
+            clipPath.addRoundRect(
+                clipRect, rippleRoundedCorners, rippleRoundedCorners, Path.Direction.CW,
+            )
+        }
     }
 
     override fun isInEditMode(): Boolean = true
 
-    /*
-     * Drawing
-     */
     override fun draw(canvas: Canvas) {
         val positionChanged = adapterPositionChanged()
-        if (rippleOverlay) {
-            if (!positionChanged) rippleBackground?.draw(canvas)
+        if (positionChanged) {
             super.draw(canvas)
-            if (!positionChanged) {
-                if (rippleRoundedCorners != 0f) {
-                    val clipPath = Path()
-                    val rect = RectF(0f, 0f, width.toFloat(), height.toFloat())
-                    clipPath.addRoundRect(
-                        rect, rippleRoundedCorners, rippleRoundedCorners, Path.Direction.CW
-                    )
-                    canvas.clipPath(clipPath)
-                }
-                canvas.drawCircle(
-                    currentCoordinates.x.toFloat(), currentCoordinates.y.toFloat(), radius, paint
-                )
+            return
+        }
+
+        if (rippleRoundedCorners > 0) {
+            canvas.withClip(clipPath) {
+                drawInternal(this)
             }
         } else {
-            if (!positionChanged) {
-                rippleBackground?.draw(canvas)
-                canvas.drawCircle(
-                    currentCoordinates.x.toFloat(), currentCoordinates.y.toFloat(), radius, paint
-                )
-            }
+            drawInternal(canvas)
+        }
+    }
+
+    private fun drawInternal(canvas: Canvas) {
+        if (rippleOverlay) {
+            rippleBackground?.draw(canvas)
+            super.draw(canvas)
+            drawRipple(canvas)
+        } else {
+            rippleBackground?.draw(canvas)
+            drawRipple(canvas)
             super.draw(canvas)
         }
     }
 
-    /*
-     * Accessor
-     */
-    fun setRippleColor(rippleColor: Int) {
-        this.rippleColor = rippleColor
-        paint.color = rippleColor
-        paint.alpha = rippleAlpha
-        invalidate()
+    private fun drawRipple(canvas: Canvas) {
+        if (radius <= 0) return
+        canvas.drawCircle(
+            currentCoordinates.x.toFloat(), currentCoordinates.y.toFloat(), radius, paint,
+        )
     }
 
-    fun setRippleOverlay(rippleOverlay: Boolean) {
-        this.rippleOverlay = rippleOverlay
-    }
-
-    fun setRippleDiameter(rippleDiameter: Int) {
-        this.rippleDiameter = rippleDiameter
-    }
-
-    fun setRippleDuration(rippleDuration: Int) {
-        this.rippleDuration = rippleDuration
+    override fun performClick(): Boolean {
+        if (childView?.performClick() == true) return true
+        return super.performClick()
     }
 
     fun setRippleBackground(color: Int) {
-        rippleBackground = ColorDrawable(color).apply { bounds = bounds }
-        invalidate()
-    }
-
-    fun setRippleHover(rippleHover: Boolean) {
-        this.rippleHover = rippleHover
-    }
-
-    fun setRippleDelayClick(rippleDelayClick: Boolean) {
-        this.rippleDelayClick = rippleDelayClick
-    }
-
-    fun setRippleFadeDuration(rippleFadeDuration: Int) {
-        this.rippleFadeDuration = rippleFadeDuration
-    }
-
-    fun setRipplePersistent(ripplePersistent: Boolean) {
-        this.ripplePersistent = ripplePersistent
-    }
-
-    fun setRippleInAdapter(rippleInAdapter: Boolean) {
-        this.rippleInAdapter = rippleInAdapter
-    }
-
-    fun setRippleRoundedCorners(rippleRoundedCorner: Int) {
-        this.rippleRoundedCorners = rippleRoundedCorner.toFloat()
-        enableClipPathSupportIfNecessary()
-    }
-
-    fun setDefaultRippleAlpha(alpha: Float) {
-        this.rippleAlpha = (255 * alpha).toInt()
-        paint.alpha = rippleAlpha
-        invalidate()
+        rippleBackground = color.toDrawable()
     }
 
     fun performRipple() {
@@ -496,49 +508,25 @@ class MaterialRippleEffect @JvmOverloads constructor(
         startRipple(null)
     }
 
-    private fun enableClipPathSupportIfNecessary() {
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            if (rippleRoundedCorners != 0f) {
-                setLayerType(LAYER_TYPE_SOFTWARE, null)
-            } else {
-                setLayerType(layerType, null)
-            }
-        }
-    }
-
-    fun getRippleAlpha(): Int = paint.alpha
-
-    fun setRippleAlpha(rippleAlpha: Int) {
-        paint.alpha = rippleAlpha
-        invalidate()
-    }
-
-    fun setRadius(radius: Float) {
-        this.radius = radius
-        invalidate()
-    }
-
-    /*
-     * Animations
-     */
     private val radiusProperty =
         object : Property<MaterialRippleEffect, Float>(Float::class.java, "radius") {
             override fun get(`object`: MaterialRippleEffect): Float = `object`.radius
             override fun set(`object`: MaterialRippleEffect, value: Float) {
-                `object`.setRadius(value)
+                `object`.radius = value
             }
         }
 
-    private val circleAlphaProperty =
-        object : Property<MaterialRippleEffect, Int>(Int::class.java, "rippleAlpha") {
-            override fun get(`object`: MaterialRippleEffect): Int = `object`.getRippleAlpha()
+    private val paintAlphaProperty =
+        object : Property<MaterialRippleEffect, Int>(Int::class.java, "paintAlpha") {
+            override fun get(`object`: MaterialRippleEffect): Int = `object`.paint.alpha
             override fun set(`object`: MaterialRippleEffect, value: Int) {
-                `object`.setRippleAlpha(value)
+                `object`.paint.alpha = value
+                `object`.invalidate()
             }
         }
 
     /*
-     * Helper
+     * Internal Helpers
      */
     private inner class PerformClickEvent : Runnable {
         override fun run() {
@@ -550,13 +538,13 @@ class MaterialRippleEffect @JvmOverloads constructor(
                     clickAdapterView(parentView)
                 }
             } else if (rippleInAdapter) {
-                clickAdapterView(findParentAdapterView())
+                findParentAdapterView()?.let { clickAdapterView(it) }
             } else {
                 childView?.performClick()
             }
         }
 
-        fun clickAdapterView(parent: AdapterView<*>) {
+        private fun clickAdapterView(parent: AdapterView<*>) {
             val position = parent.getPositionForView(this@MaterialRippleEffect)
             val itemId = parent.adapter?.getItemId(position) ?: 0L
             if (position != AdapterView.INVALID_POSITION) {
@@ -577,87 +565,83 @@ class MaterialRippleEffect @JvmOverloads constructor(
         }
     }
 
-    /*
-  * Builder
-  */
     class RippleBuilder(private val child: View) {
         private val context: Context = child.context
 
-        private var rippleColor: Int = DEFAULT_COLOR
-        private var rippleOverlay: Boolean = DEFAULT_RIPPLE_OVERLAY
-        private var rippleHover: Boolean = DEFAULT_HOVER
-        private var rippleDiameter: Float = DEFAULT_DIAMETER_DP
-        private var rippleDuration: Int = DEFAULT_DURATION
-        private var rippleAlpha: Float = DEFAULT_ALPHA
-        private var rippleDelayClick: Boolean = DEFAULT_DELAY_CLICK
-        private var rippleFadeDuration: Int = DEFAULT_FADE_DURATION
-        private var ripplePersistent: Boolean = DEFAULT_PERSISTENT
-        private var rippleBackground: Int = DEFAULT_BACKGROUND
-        private var rippleSearchAdapter: Boolean = DEFAULT_SEARCH_ADAPTER
-        private var rippleRoundedCorner: Float = DEFAULT_ROUNDED_CORNERS.toFloat()
+        private var rippleColor: Int
+        private var rippleOverlay: Boolean
+        private var rippleHover: Boolean
+        private var rippleDiameter: Float
+        private var rippleDuration: Int
+        private var rippleAlpha: Float
+        private var rippleDelayClick: Boolean
+        private var rippleFadeDuration: Int
+        private var ripplePersistent: Boolean
+        private var rippleBackgroundColor: Int
+        private var rippleInAdapter: Boolean
+        private var rippleRoundedCorner: Float
 
-        fun rippleColor(color: Int): RippleBuilder = apply { this.rippleColor = color }
+        init {
+            val res = context.resources
+            rippleColor = ResourcesCompat.getColor(res, R.color.mrl_default_color, null)
+            rippleOverlay = res.getBoolean(R.bool.mrl_default_ripple_overlay)
+            rippleHover = res.getBoolean(R.bool.mrl_default_hover)
+            rippleDiameter =
+                res.getDimension(R.dimen.mrl_default_diameter) / res.displayMetrics.density
+            rippleDuration = res.getInteger(R.integer.mrl_default_duration)
+            rippleAlpha = res.getFloatCompat(R.dimen.mrl_default_alpha)
+            rippleDelayClick = res.getBoolean(R.bool.mrl_default_delay_click)
+            rippleFadeDuration = res.getInteger(R.integer.mrl_default_fade_duration)
+            ripplePersistent = res.getBoolean(R.bool.mrl_default_persistent)
+            rippleBackgroundColor =
+                ResourcesCompat.getColor(res, R.color.mrl_default_background, null)
+            rippleInAdapter = res.getBoolean(R.bool.mrl_default_search_adapter)
+            rippleRoundedCorner =
+                res.getDimension(R.dimen.mrl_default_rounded_corners) / res.displayMetrics.density
+        }
 
-        fun rippleOverlay(overlay: Boolean): RippleBuilder = apply { this.rippleOverlay = overlay }
-
-        fun rippleHover(hover: Boolean): RippleBuilder = apply { this.rippleHover = hover }
-
-        fun rippleDiameterDp(diameterDp: Int): RippleBuilder =
-            apply { this.rippleDiameter = diameterDp.toFloat() }
-
-        fun rippleDuration(duration: Int): RippleBuilder = apply { this.rippleDuration = duration }
-
-        fun rippleAlpha(alpha: Float): RippleBuilder = apply { this.rippleAlpha = alpha }
-
-        fun rippleDelayClick(delayClick: Boolean): RippleBuilder =
-            apply { this.rippleDelayClick = delayClick }
-
-        fun rippleFadeDuration(fadeDuration: Int): RippleBuilder =
-            apply { this.rippleFadeDuration = fadeDuration }
-
-        fun ripplePersistent(persistent: Boolean): RippleBuilder =
-            apply { this.ripplePersistent = persistent }
-
-        fun rippleBackground(color: Int): RippleBuilder = apply { this.rippleBackground = color }
-
-        fun rippleInAdapter(inAdapter: Boolean): RippleBuilder =
-            apply { this.rippleSearchAdapter = inAdapter }
-
-        fun rippleRoundedCorners(radiusDp: Int): RippleBuilder =
-            apply { this.rippleRoundedCorner = radiusDp.toFloat() }
+        fun rippleColor(color: Int) = apply { rippleColor = color }
+        fun rippleOverlay(overlay: Boolean) = apply { rippleOverlay = overlay }
+        fun rippleHover(hover: Boolean) = apply { rippleHover = hover }
+        fun rippleDiameterDp(diameterDp: Int) = apply { rippleDiameter = diameterDp.toFloat() }
+        fun rippleDuration(duration: Int) = apply { rippleDuration = duration }
+        fun rippleAlpha(alpha: Float) = apply { rippleAlpha = alpha }
+        fun rippleDelayClick(delayClick: Boolean) = apply { rippleDelayClick = delayClick }
+        fun rippleFadeDuration(fadeDuration: Int) = apply { rippleFadeDuration = fadeDuration }
+        fun ripplePersistent(persistent: Boolean) = apply { ripplePersistent = persistent }
+        fun rippleBackground(color: Int) = apply { rippleBackgroundColor = color }
+        fun rippleInAdapter(inAdapter: Boolean) = apply { rippleInAdapter = inAdapter }
+        fun rippleRoundedCorners(radiusDp: Int) =
+            apply { rippleRoundedCorner = radiusDp.toFloat() }
 
         fun create(): MaterialRippleEffect {
             val layout = MaterialRippleEffect(context).apply {
-                setRippleColor(rippleColor)
-                setDefaultRippleAlpha(rippleAlpha.toFloat())
-                setRippleDelayClick(rippleDelayClick)
-
-                setRippleDiameter(dpToPx(context.resources, rippleDiameter.toFloat()).toInt())
-
-                setRippleDuration(rippleDuration)
-                setRippleFadeDuration(rippleFadeDuration)
-                setRippleHover(rippleHover)
-                setRipplePersistent(ripplePersistent)
-                setRippleOverlay(rippleOverlay)
-                setRippleBackground(this@RippleBuilder.rippleBackground)
-                setRippleInAdapter(rippleSearchAdapter)
-
-                setRippleRoundedCorners(dpToPx(context.resources, rippleRoundedCorner).toInt())
+                rippleColor = this@RippleBuilder.rippleColor
+                rippleAlpha = (255 * this@RippleBuilder.rippleAlpha).toInt()
+                rippleDelayClick = this@RippleBuilder.rippleDelayClick
+                rippleDiameter = context.resources.dpToPx(this@RippleBuilder.rippleDiameter).toInt()
+                rippleDuration = this@RippleBuilder.rippleDuration
+                rippleFadeDuration = this@RippleBuilder.rippleFadeDuration
+                rippleHover = this@RippleBuilder.rippleHover
+                ripplePersistent = this@RippleBuilder.ripplePersistent
+                rippleOverlay = this@RippleBuilder.rippleOverlay
+                rippleBackground = this@RippleBuilder.rippleBackgroundColor.toDrawable()
+                rippleInAdapter = this@RippleBuilder.rippleInAdapter
+                rippleRoundedCorners =
+                    context.resources.dpToPx(this@RippleBuilder.rippleRoundedCorner)
             }
 
             val params = child.layoutParams
             val parent = child.parent as ViewGroup?
-            var index = 0
+            val index = parent?.indexOfChild(child) ?: 0
 
-            check(parent !is MaterialRippleEffect) { "MaterialRippleLayout could not be created: parent of the view already is a MaterialRippleLayout" }
+            check(parent !is MaterialRippleEffect) { "View already has a MaterialRippleEffect parent" }
 
-            parent?.let {
-                index = it.indexOfChild(child)
-                it.removeView(child)
-            }
-
+            parent?.removeView(child)
             layout.addView(
-                child, ViewGroup.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
+                child, ViewGroupLayoutParams(
+                    ViewGroupLayoutParams.MATCH_PARENT, ViewGroupLayoutParams.MATCH_PARENT
+                )
             )
             parent?.addView(layout, index, params)
 
@@ -666,30 +650,22 @@ class MaterialRippleEffect @JvmOverloads constructor(
     }
 
     companion object {
-        private const val DEFAULT_DURATION = 350
-        private const val DEFAULT_FADE_DURATION = 75
-        private const val DEFAULT_DIAMETER_DP = 35f
-        private const val DEFAULT_ALPHA = 0.2f
-        private const val DEFAULT_COLOR = Color.BLACK
-        private const val DEFAULT_BACKGROUND = Color.TRANSPARENT
-        private const val DEFAULT_HOVER = true
-        private const val DEFAULT_DELAY_CLICK = true
-        private const val DEFAULT_PERSISTENT = false
-        private const val DEFAULT_SEARCH_ADAPTER = false
-        private const val DEFAULT_RIPPLE_OVERLAY = false
-        private const val DEFAULT_ROUNDED_CORNERS = 0
-
-        private const val FADE_EXTRA_DELAY = 50
-        private const val HOVER_DURATION: Long = 2500
-
-        @JvmStatic
         fun on(view: View): RippleBuilder = RippleBuilder(view)
 
-        @JvmStatic
-        fun dpToPx(resources: Resources, dp: Float): Float {
+        private fun Resources.dpToPx(dp: Float): Float {
             return TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP, dp, resources.displayMetrics
+                TypedValue.COMPLEX_UNIT_DIP, dp, displayMetrics
             )
         }
+
+        private fun Resources.getFloatCompat(id: Int): Float {
+            val outValue = TypedValue()
+            getValue(id, outValue, true)
+            return outValue.float
+        }
     }
+}
+
+fun View.materialRipple(init: RippleBuilder.() -> Unit = {}): MaterialRippleEffect {
+    return MaterialRippleEffect.on(this).apply(init).create()
 }

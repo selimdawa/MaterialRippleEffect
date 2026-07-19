@@ -30,7 +30,7 @@ android {
 mavenPublishing {
 
     coordinates(
-        groupId = "io.github.selimdawa", artifactId = "material-ripple-effect", version = "1.0.0"
+        groupId = "io.github.selimdawa", artifactId = "material-ripple-effect", version = "1.0.1"
     )
 
     publishToMavenCentral(automaticRelease = true)
@@ -64,4 +64,8 @@ mavenPublishing {
             developerConnection.set("scm:git:ssh://git@github.com:selimdawa/MaterialRippleEffect.git")
         }
     }
+}
+
+dependencies {
+    implementation(libs.androidx.core.ktx)
 }

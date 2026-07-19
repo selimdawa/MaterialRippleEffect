@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="mrl_default_duration">350</integer>
+    <integer name="mrl_default_fade_duration">75</integer>
+    <integer name="mrl_fade_extra_delay">50</integer>
+    <integer name="mrl_hover_duration">2500</integer>
+</resources>
