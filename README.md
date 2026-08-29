@@ -1,10 +1,14 @@
 # Material Ripple Effect 🌊
 
 <p align="center">
-  <b>A lightweight, highly customizable Android library written in 100% Kotlin to add beautiful, smooth Material Design ripple touch effects to any view in your application.</b>
+  <b>A lightweight and highly customizable Android library written in 100% Kotlin.</b>
 </p>
 
-<p style="text-align: center;">
+<p align="center">
+  Add beautiful, smooth Material Design ripple touch effects to any view in your application with simple integration and flexible configuration.
+</p>
+
+<p align="center">
  <a><img alt="Min SDK" src="https://img.shields.io/badge/Min SDK-23-020290?logo=android&logoColor=white"/></a>
  <a><img alt="Target SDK" src="https://img.shields.io/badge/Target SDK-37-0EB265?logo=android&logoColor=0EB265"/></a>
  <a href="https://kotlinlang.org"><img alt="Kotlin" src="https://img.shields.io/badge/Kotlin-2.4.10-blue?logo=kotlin&logoColor=white"/></a>
