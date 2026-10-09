@@ -22,15 +22,15 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 }
 
 mavenPublishing {
 
     coordinates(
-        groupId = "io.github.selimdawa", artifactId = "material-ripple-effect", version = "1.0.1"
+        groupId = "io.github.selimdawa", artifactId = "material-ripple-effect", version = "1.0.2"
     )
 
     publishToMavenCentral(automaticRelease = true)

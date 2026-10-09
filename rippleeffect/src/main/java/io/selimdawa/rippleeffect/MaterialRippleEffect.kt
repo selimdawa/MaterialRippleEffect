@@ -117,7 +117,7 @@ class MaterialRippleEffect @JvmOverloads constructor(
 
         override fun onDown(e: MotionEvent): Boolean {
             hasPerformedLongPress = false
-            return true
+            return super.onDown(e)
         }
     }
 
@@ -230,7 +230,6 @@ class MaterialRippleEffect @JvmOverloads constructor(
                 }
                 if (isEventInBounds) {
                     startRipple(pendingClickEvent)
-                    performClick()
                 } else if (!rippleHover) {
                     radius = 0f
                 }
@@ -517,7 +516,7 @@ class MaterialRippleEffect @JvmOverloads constructor(
         }
 
     private val paintAlphaProperty =
-        object : Property<MaterialRippleEffect, Int>(Int::class.java, "paintAlpha") {
+        object : Property<MaterialRippleEffect, Int>(Int::class.java, "rippleAlpha") {
             override fun get(`object`: MaterialRippleEffect): Int = `object`.paint.alpha
             override fun set(`object`: MaterialRippleEffect, value: Int) {
                 `object`.paint.alpha = value

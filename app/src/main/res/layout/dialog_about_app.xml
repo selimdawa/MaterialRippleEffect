@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tool="http://schemas.android.com/tools"
+    android:layout_width="300dp"
+    android:layout_height="wrap_content"
+    app:cardBackgroundColor="@android:color/white"
+    app:cardCornerRadius="30dp"
+    app:cardElevation="3dp"
+    app:cardUseCompatPadding="true"
+    app:strokeWidth="0dp"
+    tool:ignore="all">
+
+    <io.selimdawa.rippleeffect.MaterialRippleEffect
+        style="@style/RippleStyleWhite"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:padding="10dp"
+            android:text="@string/app_name"
+            android:textAlignment="center"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+    </io.selimdawa.rippleeffect.MaterialRippleEffect>
+
+</com.google.android.material.card.MaterialCardView>

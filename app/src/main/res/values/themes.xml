@@ -8,4 +8,12 @@
     </style>
 
     <style name="Theme.MaterialRippleEffect" parent="Base.Theme.MaterialRippleEffect" />
+
+    <!--style for ripple library-->
+    <style name="RippleStyleWhite">
+        <item name="mrl_rippleOverlay">true</item>
+        <item name="mrl_rippleColor">@color/image_profile</item>
+        <item name="mrl_rippleHover">true</item>
+        <item name="mrl_rippleAlpha">0.2</item>
+    </style>
 </resources>
