@@ -1,0 +1,2 @@
+﻿-keep class io.selimdawa.rippleeffect.** { *; }
+-keepattributes Signature, InnerClasses, EnclosingMethod, *Annotation*, SourceFile, LineNumberTable
