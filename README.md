@@ -15,6 +15,44 @@
  <a href="https://www.apache.org/licenses/LICENSE-2.0"><img alt="License" src="https://img.shields.io/badge/License-Apache_2.0-CC9900?logo=apache&logoColor=white"/></a>
 </p>
 
+## Day Mode
+
+<table width="100%">
+  <thead>
+    <tr>
+      <th width="33%">One</th>
+      <th width="33%">Two</th>
+      <th width="33%">Three</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center"><img src="UI/1.jpg" width="100%" alt="Day Mode 1"/></td>
+      <td align="center"><img src="UI/2.jpg" width="100%" alt="Day Mode 2"/></td>
+      <td align="center"><img src="UI/3.gif" width="100%" alt="Day Mode 3"/></td>
+    </tr>
+  </tbody>
+</table>
+
+## Night Mode
+
+<table width="100%">
+  <thead>
+    <tr>
+      <th width="33%">One</th>
+      <th width="33%">Two</th>
+      <th width="33%">Three</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center"><img src="UI/4.jpg" width="100%" alt="Night Mode 1"/></td>
+      <td align="center"><img src="UI/5.jpg" width="100%" alt="Night Mode 2"/></td>
+      <td align="center"><img src="UI/6.gif" width="100%" alt="Night Mode 3"/></td>
+    </tr>
+  </tbody>
+</table> 
+
 ---
 
 ## ✨ Features
